@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Parallax Map</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<style type="text/css">
+			body
+			{
+				margin: 8px;
+				overflow: hidden;
+			}
+			canvas
+			{
+				position: absolute;
+				left: 8px;
+				top: 8px;
+				border: 1px solid black;
+			}
+			div
+			{
+				position: absolute;
+				left: 16px;
+				top: 16px;
+				padding: 4px;
+				z-index: 100;
+				background-color: white;
+				-webkit-clip-path: circle(10px at 14px 14px);
+				clip-path: circle(10px at 14px 14px);
+				transition: -webkit-clip-path 1s, clip-path 1s;
+			}
+			div:hover
+			{
+				-webkit-clip-path: circle(150px at 14px 14px);
+			}
+		</style>
+		<script type="text/javascript" src="vector.js"></script>
+		<script type="text/javascript" src="camera.js"></script>
+		<script type="text/javascript" src="shaders.js"></script>
+		<script type="text/javascript" src="mesh.js"></script>
+		<script type="text/javascript" src="debug.js"></script>
+		<script type="text/javascript" src="main.js"></script>
+		<script type="text/javascript">
+			document.addEventListener("DOMContentLoaded", main);
+		</script>
+	</head>
+	<body>
+	<div>
+		<br>
+		<label>texture <select id="texture">
+			<option value="0">Noise</option>
+			<option value="1">Bricks</option>
+		</select></label><br>
+		<label>Model <select>
+			<option value="0">Plane</option>
+			<option value="1" disabled>Cube</option>
+			<option value="2" disabled>Sphere</option>
+		</select></label>
+	</div>
+	</body>
+</html>
