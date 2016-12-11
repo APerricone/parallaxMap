@@ -13,10 +13,10 @@ function main()
 	gl.cullFace(gl.BACK);
 	gl.getExtension("EXT_frag_depth");
 	gl.enable(gl.DEPTH_TEST);
+	gl.depthFunc(gl.LEQUAL);
 
 	var mesh = new Mesh(gl,draw);
 	var camera = new Camera();
-	var debugDr = new debugDraw(gl);
 	var down = false;
 	var exX,exY;
 	var alpha=0, beta=0, dist = 5;
@@ -79,7 +79,7 @@ function main()
 		gl.viewport(0,0,c.width,c.height);
 		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 		mesh.draw(camera.viewProj,camera.invViewProj,c.width,c.height,selText.value);
-		debugDr.draw(camera.viewProj);
+		mesh.drawDebug(camera.viewProj);
 	}
 
 	function onResize()

@@ -22,6 +22,14 @@ function Mesh(gl,onDone)
 		3,7,2, 2,7,6,
 		2,6,0, 0,6,4]), gl.STATIC_DRAW);
 	
+	this.iBuffDebug = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,this.iBuffDebug);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint8Array([
+		0,1, 1,2, 2,0, 1,3, 3,2,
+		0,4, 4,1, 4,5, 5,1, 
+		5,3, 5,7, 7,3,
+		7,2, 7,6, 6,2, 
+		6,0, 6,4]), gl.STATIC_DRAW);
 	var tc = this;
 	loadProgram(gl,"mesh.vs","mesh.fs",function(p)
 	{
@@ -38,21 +46,31 @@ function Mesh(gl,onDone)
 		var plane0 = [0,0,1,-0.4];		// plane1 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
 		
 		gl.useProgram(tc.program);	
-		gl.uniform4fv(gl.getUniformLocation(tc.program, "uPlane1"), new Float32Array(uPlane));
-		gl.uniform4fv(gl.getUniformLocation(tc.program, "vPlane1"), new Float32Array(vPlane));
+		gl.uniform4fv(gl.getUniformLocation(tc.program, "u_uPlane1"), new Float32Array(uPlane));
+		gl.uniform4fv(gl.getUniformLocation(tc.program, "u_vPlane1"), new Float32Array(vPlane));
 		//var uPlane = [1/1.4,0,0,0.5]; // u = dot(uPlane,vec4(P,1)
 		//var vPlane = [0,1/1.4,0,0.5]; // v = dot(vPlane,vec4(P,1)
-		gl.uniform4fv(gl.getUniformLocation(tc.program, "uPlane0"), new Float32Array(uPlane));
-		gl.uniform4fv(gl.getUniformLocation(tc.program, "vPlane0"), new Float32Array(vPlane));
-		gl.uniform4fv(gl.getUniformLocation(tc.program, "plane1"), new Float32Array(plane1));
-		gl.uniform4fv(gl.getUniformLocation(tc.program, "plane0"), new Float32Array(plane0));
+		gl.uniform4fv(gl.getUniformLocation(tc.program, "u_uPlane0"), new Float32Array(uPlane));
+		gl.uniform4fv(gl.getUniformLocation(tc.program, "u_vPlane0"), new Float32Array(vPlane));
+		gl.uniform4fv(gl.getUniformLocation(tc.program, "u_plane1"), new Float32Array(plane1));
+		gl.uniform4fv(gl.getUniformLocation(tc.program, "u_plane0"), new Float32Array(plane0));
 		
 		gl.uniform1i(gl.getUniformLocation(tc.program, "sDepthTxt"),0);
 		gl.uniform1i(gl.getUniformLocation(tc.program, "sNormalTxt"),1);
 		
+		var sa = Math.sin(0.0);
+		var ca = Math.cos(0.0);
+		var mat = [ca,0,sa,0, 0,1,0,0, -sa,0,ca,0, 0,0,0,1];
+		
 		gl.uniformMatrix4fv(gl.getUniformLocation(tc.program, "uModelMatrix"), false, 
-			new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]));
-	
+			new Float32Array(mat));
+		gl.uniformMatrix4fv(gl.getUniformLocation(tc.program, "uInvTransModelMatrix"), false, 
+			new Float32Array(matrix.transpose(matrix.inverse(mat))));
+		
+		gl.useProgram(tc.debugProgram);	
+		gl.uniformMatrix4fv(gl.getUniformLocation(tc.debugProgram, "uModelMatrix"), false, 
+			new Float32Array(mat));
+		console.log("setup debug");
 		onDone();
 	});
 	//var txt = gl.getUniformLocation(this.program, "uTxt");
@@ -138,6 +156,21 @@ function Mesh(gl,onDone)
 	}
 	this.depthTexture[1] = textureFromCanvas(gl, canvasTmp);	
 	this.normTexture[1] = normalFromCanvas(gl, canvasTmp,c2d);
+
+	
+	this.debugProgram = compile(gl,
+	"attribute vec3 pos;\n" +
+	"uniform mat4 uPVMatrix;\n"+
+	"uniform mat4 uModelMatrix;\n"+
+	"varying vec3 cc;\n"+
+	"void main() {	cc=pos; gl_Position = uPVMatrix * uModelMatrix * vec4(pos,1); }",
+	"#ifdef GL_ES\n"+
+	"precision highp float;\n"+
+	"#endif\n"+
+	"varying vec3 cc;\n"+
+	"void main() { gl_FragColor = vec4(1.0); }");
+	this.debugProgram.posLocation = gl.getAttribLocation(this.debugProgram, "pos");
+	this.debugProgram.pvMatrixUniform = gl.getUniformLocation(this.debugProgram, "uPVMatrix");
 }
 
 function textureFromCanvas(gl,canvasTmp)
@@ -232,4 +265,20 @@ Mesh.prototype.draw = function(matrix,invMat,w,h,txt)
 	gl.vertexAttribPointer(this.posLocation, 3, gl.FLOAT, false, 0, 0);
 	gl.drawElements(gl.TRIANGLES, 30, gl.UNSIGNED_BYTE, 0);
 
+}
+
+Mesh.prototype.drawDebug = function(matrix)
+{
+	if(this.debugProgram == undefined) return;
+	var gl=this.gl;
+	gl.bindBuffer(gl.ARRAY_BUFFER,this.vBuff);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,this.iBuffDebug);
+	gl.useProgram(this.debugProgram);	
+	gl.enableVertexAttribArray(this.debugProgram.posLocation);
+	gl.vertexAttribPointer(this.debugProgram.posLocation, 3, gl.FLOAT, false, 0, 0);
+	gl.uniformMatrix4fv(this.debugProgram.pvMatrixUniform, false, matrix);
+	//gl.polygonMode(gl.FRONT_AND_BACK,gl.LINE);
+	
+	gl.drawElements(gl.LINES, 34, gl.UNSIGNED_BYTE, 0);
+	//gl.polygonMode(gl.FRONT_AND_BACK,gl.FILL);
 }

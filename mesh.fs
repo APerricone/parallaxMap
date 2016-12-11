@@ -7,18 +7,15 @@ uniform sampler2D sNormalTxt;
 
 uniform mat4 uInvPVMatrix;
 
-uniform vec4 uPlane0;
-uniform vec4 vPlane0;
-uniform vec4 uPlane1;
-uniform vec4 vPlane1;
+/*flat */varying vec4 uPlane0;
+/*flat */varying vec4 vPlane0;
+/*flat */varying vec4 uPlane1;
+/*flat */varying vec4 vPlane1;
 
-uniform vec4 plane0;
-uniform vec4 plane1;
+/*flat */varying vec4 plane0;
+/*flat */varying vec4 plane1;
 
 uniform vec2 uScreenSize;
-
-//varying vec3 txt1;
-//varying vec3 txt0;
 
 vec3 linePlane(vec3 a,vec3 b,vec4 plane)
 {
