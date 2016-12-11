@@ -5,13 +5,12 @@ precision highp float;
 uniform sampler2D sDepthTxt;
 uniform sampler2D sNormalTxt;
 
+uniform mat4 uInvPVMatrix;
 
-uniform mat4 uInvMatrix;
-
-uniform vec4 uPlane0; //TODO: split in uPlane0 and uPlane1
-uniform vec4 vPlane0; //TODO: split in vPlane0 and vPlane1
-uniform vec4 uPlane1; //TODO: split in uPlane0 and uPlane1
-uniform vec4 vPlane1; //TODO: split in vPlane0 and vPlane1
+uniform vec4 uPlane0;
+uniform vec4 vPlane0;
+uniform vec4 uPlane1;
+uniform vec4 vPlane1;
 
 uniform vec4 plane0;
 uniform vec4 plane1;
@@ -46,8 +45,8 @@ float GetCollision(float v0,float v1,float u0,float u1)
 void main() 
 {
 	vec2 screenPos = (gl_FragCoord.xy/uScreenSize)*2.0-vec2(1.0);
-	vec4 posA = uInvMatrix * vec4( screenPos,0,1 ); 
-	vec4 posB = uInvMatrix * vec4( screenPos,1,1 ); 
+	vec4 posA = uInvPVMatrix * vec4( screenPos,0,1 ); 
+	vec4 posB = uInvPVMatrix * vec4( screenPos,1,1 ); 
 	posA/=posA.w;
 	posB/=posB.w;
 	vec3 pos0 = linePlane(posA.xyz,posB.xyz,plane0);

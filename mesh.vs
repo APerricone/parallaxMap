@@ -1,6 +1,7 @@
 attribute vec3 pos;
 uniform mat4 uPVMatrix;
 uniform mat4 uModelMatrix;
+//uniform mat4 uInvTransModelMatrix;
 
 void main() 
 { 

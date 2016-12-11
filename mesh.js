@@ -28,7 +28,7 @@ function Mesh(gl,onDone)
 		tc.program = p;
 		tc.posLocation = gl.getAttribLocation(tc.program, "pos");
 		tc.pvMatrixUniform = gl.getUniformLocation(tc.program, "uPVMatrix");
-		tc.invMatrixUniform = gl.getUniformLocation(tc.program, "uInvMatrix");
+		tc.invPVMatrixUniform = gl.getUniformLocation(tc.program, "uInvPVMatrix");
 		tc.screenSizeUniform = gl.getUniformLocation(tc.program, "uScreenSize");
 		
 		
@@ -174,7 +174,7 @@ function normalFromCanvas(gl,canvasTmp,c2d)
 		var nx = getPixel(x+1,y);
 		var py = getPixel(x,y-1);
 		var ny = getPixel(x,y+1);
-		var v = v_normalize([nx-px,ny-py,10]);
+		var v = vector.normalize([nx-px,ny-py,10]);
 		c2d.fillStyle= 'rgb('+Math.round((v[0]+1)*127.5)+','+Math.round((v[1]+1)*127.5)+','+Math.round((v[2]+1)*127.5)+')';
 		c2d.fillRect(x,y,1,1);
 	}
@@ -220,7 +220,7 @@ Mesh.prototype.draw = function(matrix,invMat,w,h,txt)
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,this.iBuff);
 	gl.useProgram(this.program);	
 	gl.uniformMatrix4fv(this.pvMatrixUniform, false, matrix);
-	gl.uniformMatrix4fv(this.invMatrixUniform, false, invMat);
+	gl.uniformMatrix4fv(this.invPVMatrixUniform, false, invMat);
 	gl.uniform2fv(this.screenSizeUniform, new Float32Array([w,h]));
 	gl.uniform2fv(this.screenSizeUniform, new Float32Array([w,h]));
 	gl.activeTexture(gl.TEXTURE0);
