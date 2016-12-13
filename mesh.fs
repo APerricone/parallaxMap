@@ -7,6 +7,8 @@ uniform sampler2D sNormalTxt;
 
 uniform mat4 uPVMatrix;
 uniform mat4 uInvPVMatrix;
+uniform mat4 uModelMatrix;
+uniform mat4 uInvTransModelMatrix;
 
 /*flat */varying vec4 uPlane0;
 /*flat */varying vec4 vPlane0;
@@ -86,7 +88,8 @@ void main()
 	if(all(greaterThanEqual(result.xy,vec2(0.0))) && all(lessThanEqual(result.xy,vec2(1.0))))
 	{
 		vec3 n = texture2D(sNormalTxt,result.xy).xyz * vec3(2.0) - vec3(1.0);
-		float l = clamp(dot(n,vec3(0.4,-0.8,0.3)),0.0,1.0);
+		n = (uInvTransModelMatrix * vec4(n,0)).xyz;
+		float l = clamp(dot(n,vec3(0.4,0.8,0.5)),0.0,1.0);
 		l = l * 0.8 + 0.2;
 		gl_FragColor = vec4(l,l,l,1);
 		//#if GL_EXT_frag_depth

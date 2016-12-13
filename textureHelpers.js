@@ -125,7 +125,7 @@ function normalFromCanvas(gl,canvasTmp,c2d)
 		var nx = getPixel(x+1,y);
 		var py = getPixel(x,y-1);
 		var ny = getPixel(x,y+1);
-		var v = vector.normalize([nx-px,ny-py,10]);
+		var v = vector.normalize([px-nx,py-ny,10]);
 		c2d.fillStyle= 'rgb('+Math.round((v[0]+1)*127.5)+','+Math.round((v[1]+1)*127.5)+','+Math.round((v[2]+1)*127.5)+')';
 		c2d.fillRect(x,y,1,1);
 	}

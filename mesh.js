@@ -44,7 +44,7 @@ function Mesh(gl,onDone)
 		gl.uniform1i(gl.getUniformLocation(tc.program, "sDepthTxt"),0);
 		gl.uniform1i(gl.getUniformLocation(tc.program, "sNormalTxt"),1);
 
-		tc.setCube();
+		tc.setPlane();
 		onDone();
 	});
 	//var txt = gl.getUniformLocation(this.program, "uTxt");
@@ -56,7 +56,7 @@ function Mesh(gl,onDone)
 	var tmp = new NoiseTexture(8,canvasTmp);
 	for(var i=0;i<8;i++)
 	{
-		tmp.rnd[7-i][0] = tmp.rnd[0][i];
+		tmp.rnd[i][0] = tmp.rnd[0][i] ;
 	}
 	
 	tmp.render(8);
@@ -100,6 +100,7 @@ function Mesh(gl,onDone)
 	this.debugProgram.uModelMatrix = gl.getUniformLocation(this.debugProgram, "uModelMatrix");
 
 	this.matrices = [];
+	this.model = 0;
 }
 
 Mesh.prototype.setPlane = function()
@@ -138,16 +139,6 @@ Mesh.prototype.setPlane = function()
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_vPlane0"), vPlane);
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane1"), plane1);
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane0"), plane0);
-
-	/*var ca = Math.cos(0.0);
-	var sa = Math.sin(0.0);
-	var mat = [ca,0,sa,0, 0,1,0,0, -sa,0,ca,0, 0,0,0,1];
-	
-	gl.uniformMatrix4fv(this.uModelMatrix, false, new Float32Array(mat));
-	gl.uniformMatrix4fv(this.uInvTransModelMatrix, false, new Float32Array(matrix.transpose(matrix.inverse(mat))));
-	
-	gl.useProgram(this.debugProgram);	
-	gl.uniformMatrix4fv(this.debugProgram.uModelMatrix, false, new Float32Array(mat));*/
 }
 
 Mesh.prototype.setCube = function()
@@ -183,32 +174,97 @@ Mesh.prototype.setCube = function()
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane0"), plane0);
 
 	this.matrices = [];
-	this.matrices[0] = new Float32Array([ 1,0, 0,0, 0, 1,0,0,  0,0, 1,0, 0,0,0,1]);
-	this.matrices[1] = new Float32Array([ 0,0, 1,0, 0, 1,0,0, -1,0, 0,0, 0,0,0,1]);
-	this.matrices[2] = new Float32Array([ 0,0,-1,0, 0, 1,0,0,  1,0, 0,0, 0,0,0,1]);
-	this.matrices[3] = new Float32Array([-1,0, 0,0, 0, 1,0,0,  0,0,-1,0, 0,0,0,1]);
-	this.matrices[4] = new Float32Array(matrix.rotate_x(Math.PI/2,[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]));
-	this.matrices[5] = new Float32Array(matrix.rotate_x(-Math.PI/2,[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]));
+	this.matrices.push(new Float32Array(matrix.identity(4)));
+	this.matrices.push(new Float32Array(matrix.rotate_y(Math.PI/2,4)));
+	this.matrices.push(new Float32Array(matrix.rotate_y(-Math.PI/2,4)));
+	this.matrices.push(new Float32Array(matrix.rotate_y(Math.PI,4)));
+	this.matrices.push(new Float32Array(matrix.rotate_x(Math.PI/2,4)));
+	this.matrices.push(new Float32Array(matrix.rotate_x(-Math.PI/2,4)));
 	this.itMatrices = [];
 	for(var i=0;i<this.matrices.length;i++)
 	{
 		this.itMatrices[i] = new Float32Array(matrix.transpose(matrix.inverse(this.matrices[i])))
 	}
 	
-	/*var ca = Math.cos(0.0);
-	var sa = Math.sin(0.0);
-	var mat = [ca,0,sa,0, 0,1,0,0, -sa,0,ca,0, 0,0,0,1];
-	
-	gl.uniformMatrix4fv(this.uModelMatrix, false, new Float32Array(mat));
-	gl.uniformMatrix4fv(this.uInvTransModelMatrix, false, new Float32Array(matrix.transpose(matrix.inverse(mat))));
-	
-	gl.useProgram(this.debugProgram);	
-	gl.uniformMatrix4fv(this.debugProgram.uModelMatrix, false, new Float32Array(mat));*/
 }
 
-Mesh.prototype.draw = function(matrix,invMat,w,h,txt)
+Mesh.prototype.setSphere = function()
+{
+	var gl=this.gl;
+
+	gl.bindBuffer(gl.ARRAY_BUFFER,this.vBuff);
+	var ca = Math.cos(Math.PI/8);
+	var sa = Math.sin(Math.PI/8);
+	var direx = vector.normalize([sa,sa,ca]);
+	
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
+		 1.0*direx[0], 1.0*direx[1], 1.0*direx[2], //0 
+		-1.0*direx[0], 1.0*direx[1], 1.0*direx[2], //1
+		 1.0*direx[0],-1.0*direx[1], 1.0*direx[2], //2
+		-1.0*direx[0],-1.0*direx[1], 1.0*direx[2], //3
+		 0.8*direx[0], 0.8*direx[1], 0.8*direx[2], //4 
+		-0.8*direx[0], 0.8*direx[1], 0.8*direx[2], //5
+		 0.8*direx[0],-0.8*direx[1], 0.8*direx[2], //6
+		-0.8*direx[0],-0.8*direx[1], 0.8*direx[2]  //7
+	]), gl.STATIC_DRAW);
+	this.txtIdx = [0];
+
+	var uPlane = new Float32Array([1/2.0,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
+	var vPlane = new Float32Array([0,1/2.0,0,0.5]); // v = dot(vPlane,vec4(P,1)
+	var plane1 = new Float32Array([0,0,1,1]);  		// plane0 = plane containes the triangle and the points with height 1 -> vec4(P,-1) * plane1 = 0
+	var plane0 = new Float32Array([0,0,1,0.8]);		// plane1 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
+		
+	gl.useProgram(this.program);	
+	gl.uniform4fv(gl.getUniformLocation(this.program, "u_uPlane1"), uPlane);
+	gl.uniform4fv(gl.getUniformLocation(this.program, "u_vPlane1"), vPlane);
+	var uPlane = new Float32Array([1/1.6,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
+	var vPlane = new Float32Array([0,1/1.6,0,0.5]); // v = dot(vPlane,vec4(P,1)
+	gl.uniform4fv(gl.getUniformLocation(this.program, "u_uPlane0"), uPlane);
+	gl.uniform4fv(gl.getUniformLocation(this.program, "u_vPlane0"), vPlane);
+	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane1"), plane1);
+	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane0"), plane0);
+
+	this.matrices = [];
+	var rotMat_y = matrix.rotate_y(Math.PI/4,4);
+	var rotMat_x = matrix.rotate_x(Math.PI/8,4);
+	var currMat = matrix.identity(4);
+	
+	currMat = matrix.multiply(currMat,rotMat_x);	this.matrices.push(new Float32Array(currMat));
+	for(var i=0;i<7;i++)
+	{
+		currMat = matrix.multiply(currMat,rotMat_y); 	this.matrices.push(new Float32Array(currMat));
+	}
+	
+	rotMat_x = matrix.rotate_x(-Math.PI/8,4);
+	currMat = matrix.identity(4);
+	
+	currMat = matrix.multiply(currMat,rotMat_x);	this.matrices.push(new Float32Array(currMat));
+	for(var i=0;i<7;i++)
+	{
+		currMat = matrix.multiply(currMat,rotMat_y); 	this.matrices.push(new Float32Array(currMat));
+	}
+
+	this.itMatrices = [];
+	for(var i=0;i<this.matrices.length;i++)
+	{
+		this.itMatrices[i] = new Float32Array(matrix.transpose(matrix.inverse(this.matrices[i])))
+	}
+	
+}
+
+Mesh.prototype.draw = function(matrix,invMat,w,h,txt,model)
 {
 	if(this.program == undefined) return;
+	if(this.model!=model)
+	{
+		this.model=model;
+		switch(model)
+		{
+			case 0: this.setPlane(); break;
+			case 1: this.setCube(); break;
+			case 2: this.setSphere(); break;
+		}
+	}
 	var gl=this.gl;
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.vBuff);
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,this.iBuff);

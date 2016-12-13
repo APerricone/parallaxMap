@@ -38,6 +38,8 @@ function main()
 	c.onmouseout = function() { down = false; };
 	function SetCamera()
 	{
+		if(beta>1.5) beta=1.5;
+		if(beta<-1.5) beta=-1.5;
 		var sa = Math.sin(alpha);
 		var ca = Math.cos(alpha);
 		var sb = Math.sin(beta);
@@ -74,11 +76,14 @@ function main()
 	};
 	var selText = document.getElementById('texture');
 	selText.onchange = draw;
+	var selModel= document.getElementById('model');
+	selModel.onchange = draw;
 	function draw()
 	{
 		gl.viewport(0,0,c.width,c.height);
 		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-		mesh.draw(camera.viewProj,camera.invViewProj,c.width,c.height,selText.value);
+		mesh.draw(camera.viewProj,camera.invViewProj,c.width,c.height,
+			parseInt(selText.value),parseInt(selModel.value));
 		mesh.drawDebug(camera.viewProj);
 	}
 
