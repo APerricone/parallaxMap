@@ -73,3 +73,22 @@ matrix.multiply = function(a,b,rr)
 		}
 	return rr;
 }
+
+
+matrix.rotate_x = function(a,rr)
+{
+	if(rr==undefined)
+	{
+		rr = [1,0,0, 0,1,0, 0,0,1]; 
+	}
+	var rows = square.indexOf(rr.length);
+	if(rows==-1) throw "Invalid parameter, the parameter must be a square matrix."
+	if(rows<3) throw "Invalid parameter, the parameter must be a square matrix."
+	var sa = Math.sin(a);
+	var ca = Math.cos(a);	
+	rr[1*rows+1] = ca;
+	rr[2*rows+2] = ca;
+	rr[1*rows+2] = -sa;
+	rr[2*rows+1] = sa;
+	return rr;
+}

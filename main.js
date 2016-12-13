@@ -19,11 +19,11 @@ function main()
 	var camera = new Camera();
 	var down = false;
 	var exX,exY;
-	var alpha=0, beta=0, dist = 5;
-	camera.pos = [0,0,5];
+	var alpha=0, beta=0, dist = 7;
+	camera.pos = [0,0,dist];
 	camera.look = [0,0,-0.2];
-	camera.nearPlane = 3;
-	camera.farPlane = 7;
+	camera.nearPlane = dist-2;
+	camera.farPlane = dist+2;
 	camera.persp = true;
 	camera.fovDeg = 35;
 

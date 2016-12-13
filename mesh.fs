@@ -1,10 +1,11 @@
-//#extension GL_EXT_frag_depth : enable
+#extension GL_EXT_frag_depth : enable
 #ifdef GL_ES
 precision highp float;
 #endif
 uniform sampler2D sDepthTxt;
 uniform sampler2D sNormalTxt;
 
+uniform mat4 uPVMatrix;
 uniform mat4 uInvPVMatrix;
 
 /*flat */varying vec4 uPlane0;
@@ -48,14 +49,14 @@ void main()
 	posB/=posB.w;
 	vec3 pos0 = linePlane(posA.xyz,posB.xyz,plane0);
 	vec3 pos1 = linePlane(posA.xyz,posB.xyz,plane1);
+	//vec4 s0 = uPVMatrix * vec4(pos0,1); s0/=s0.w; 
+	//vec4 s1 = uPVMatrix * vec4(pos1,1); s1/=s1.w; 
 	vec3 txt0 = vec3(dot(uPlane0,vec4(pos0,1)),dot(vPlane0,vec4(pos0,1)),pos0.z);
 	vec3 txt1 = vec3(dot(uPlane1,vec4(pos1,1)),dot(vPlane1,vec4(pos1,1)),pos1.z);
-	
-	
 	vec3 result = vec3(-0.5);
 	float t,nt;
 	float h0, h1; 
-	vec3 uv0,uv1;
+	vec3 uv0,uv1,finalPos;
 	t=nt=1.0;
 	uv0=uv1=txt1;
 	h0=h1=texture2D(sDepthTxt,txt1.xy).x; 	
@@ -71,10 +72,12 @@ void main()
 		if( r>=0.0-EPS && r<=1.0+EPS)
 		{
 			result = mix(uv0,uv1,r);
-			//gl_FragDepthEXT = result.z;
 			//if(result.x>=0.0 && result.y>=0.0 && result.x<=1.0 && result.y<=1.0 )
 			if(all(greaterThanEqual(result.xy,vec2(0.0))) && all(lessThanEqual(result.xy,vec2(1.0))))
+			{
+				finalPos = mix(pos0,pos1,nt+r*STEP);
 				break;
+			}
 			else
 				result = vec3(1.5);
 		}
@@ -86,7 +89,12 @@ void main()
 		float l = clamp(dot(n,vec3(0.4,-0.8,0.3)),0.0,1.0);
 		l = l * 0.8 + 0.2;
 		gl_FragColor = vec4(l,l,l,1);
-		//gl_FragColor = texture2D(sNormalTxt,result.xy); 
+		//#if GL_EXT_frag_depth
+		//vec4 screenPos = uPVMatrix * vec4(pos1,1);  
+		//screenPos/=screenPos.w;
+		//gl_FragDepthEXT = screenPos.z;
+		////#endif 
+		//gl_FragColor = vec4(screenPos.xyz,1);
 	}
 	else
 		discard;
