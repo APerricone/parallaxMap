@@ -53,17 +53,20 @@ function Mesh(gl,onDone)
 	var canvasTmp = document.createElement("canvas");
 	canvasTmp.width = canvasTmp.height = 256;
 	var	c2d = canvasTmp.getContext('2d');
-	var tmp = new NoiseTexture(8,canvasTmp);
+	var tmp = new NoiseTexture(8);
 	for(var i=0;i<8;i++)
 	{
 		tmp.rnd[i][0] = tmp.rnd[0][i] ;
 	}
 	
-	tmp.render(8);
+	tmp.render(canvasTmp,8,false);
 	this.depthTexture = [];
 	this.normTexture = [];
 	this.depthTexture[0] = textureFromCanvas(gl, canvasTmp);
 	this.normTexture[0] = normalFromCanvas(gl, canvasTmp,c2d);
+	tmp.render(canvasTmp,8,true);
+	this.depthTexture[1] = textureFromCanvas(gl, canvasTmp);
+	this.normTexture[1] = normalFromCanvas(gl, canvasTmp,c2d);
 
 	c2d.fillStyle = '#000';
 	c2d.fillRect(0,0,256,256);
@@ -80,8 +83,26 @@ function Mesh(gl,onDone)
 		c2d.fillRect(128+4,32+4+y, 64-8, 32-8);
 		c2d.fillRect(192+4,32+4+y, 64-8, 32-8);
 	}
-	this.depthTexture[1] = textureFromCanvas(gl, canvasTmp);	
-	this.normTexture[1] = normalFromCanvas(gl, canvasTmp,c2d);
+	this.depthTexture[2] = textureFromCanvas(gl, canvasTmp);	
+	this.normTexture[2] = normalFromCanvas(gl, canvasTmp,c2d);
+	c2d.fillStyle = '#000';
+	c2d.fillRect(0,0,256,256);
+	c2d.fillStyle = '#FFF';
+	for(var r=16;r>0;r--)
+	{
+		var c = Math.round(255*Math.sqrt(1-r/16));
+		c2d.fillStyle = 'rgb('+c+','+c+','+c+')';
+		for(var y=32;y<256;y+=64)
+			for(var x=32;x<256;x+=64)
+		{
+			//c2d.fillRect(x-16, y-16, 32, 32);
+			c2d.beginPath();
+			c2d.arc(x,y,r*2,0,Math.PI*2);
+			c2d.fill();
+		}
+	}
+	this.depthTexture[3] = textureFromCanvas(gl, canvasTmp);	
+	this.normTexture[3] = normalFromCanvas(gl, canvasTmp,c2d);
 
 	
 	this.debugProgram = compile(gl,
@@ -101,6 +122,7 @@ function Mesh(gl,onDone)
 
 	this.matrices = [];
 	this.model = 0;
+	this.changeTxt = 100;
 }
 
 Mesh.prototype.setPlane = function()
@@ -139,6 +161,7 @@ Mesh.prototype.setPlane = function()
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_vPlane0"), vPlane);
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane1"), plane1);
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane0"), plane0);
+	this.changeTxt = 100;
 }
 
 Mesh.prototype.setCube = function()
@@ -151,23 +174,22 @@ Mesh.prototype.setCube = function()
 		-1.0, 1.0, 1.0, //1
 		 1.0,-1.0, 1.0, //2
 		-1.0,-1.0, 1.0, //3
-		 0.8, 0.8, 0.8, //4 
-		-0.8, 0.8, 0.8, //5
-		 0.8,-0.8, 0.8, //6
-		-0.8,-0.8, 0.8  //7
+		 0.9, 0.9, 0.9, //4 
+		-0.9, 0.9, 0.9, //5
+		 0.9,-0.9, 0.9, //6
+		-0.9,-0.9, 0.9  //7
 	]), gl.STATIC_DRAW);
-	this.txtIdx = [0];
 
 	var uPlane = new Float32Array([1/2.0,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
 	var vPlane = new Float32Array([0,1/2.0,0,0.5]); // v = dot(vPlane,vec4(P,1)
 	var plane1 = new Float32Array([0,0,1,1]);  		// plane0 = plane containes the triangle and the points with height 1 -> vec4(P,-1) * plane1 = 0
-	var plane0 = new Float32Array([0,0,1,0.8]);		// plane1 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
+	var plane0 = new Float32Array([0,0,1,0.9]);		// plane1 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
 		
 	gl.useProgram(this.program);	
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_uPlane1"), uPlane);
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_vPlane1"), vPlane);
-	var uPlane = new Float32Array([1/1.6,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
-	var vPlane = new Float32Array([0,1/1.6,0,0.5]); // v = dot(vPlane,vec4(P,1)
+	var uPlane = new Float32Array([1/1.8,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
+	var vPlane = new Float32Array([0,1/1.8,0,0.5]); // v = dot(vPlane,vec4(P,1)
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_uPlane0"), uPlane);
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_vPlane0"), vPlane);
 	gl.uniform4fv(gl.getUniformLocation(this.program, "u_plane1"), plane1);
@@ -185,6 +207,7 @@ Mesh.prototype.setCube = function()
 	{
 		this.itMatrices[i] = new Float32Array(matrix.transpose(matrix.inverse(this.matrices[i])))
 	}
+	this.changeTxt = 4;
 	
 }
 
@@ -273,14 +296,21 @@ Mesh.prototype.draw = function(matrix,invMat,w,h,txt,model)
 	gl.uniformMatrix4fv(this.invPVMatrixUniform, false, invMat);
 	gl.uniform2fv(this.screenSizeUniform, new Float32Array([w,h]));
 	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, this.depthTexture[txt]);
+	gl.bindTexture(gl.TEXTURE_2D, this.depthTexture[txt*2]);
 	gl.activeTexture(gl.TEXTURE1);
-	gl.bindTexture(gl.TEXTURE_2D, this.normTexture[txt]);
+	gl.bindTexture(gl.TEXTURE_2D, this.normTexture[txt*2]);
 
 	gl.enableVertexAttribArray(this.posLocation);
 	gl.vertexAttribPointer(this.posLocation, 3, gl.FLOAT, false, 0, 0);
 	for(var i=0;i<this.matrices.length;i++)
 	{
+		if(i==this.changeTxt)
+		{
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, this.depthTexture[txt*2+1]);
+			gl.activeTexture(gl.TEXTURE1);
+			gl.bindTexture(gl.TEXTURE_2D, this.normTexture[txt*2+1]);
+		}
 		gl.uniformMatrix4fv(this.uModelMatrix, false, this.matrices[i]);
 		gl.uniformMatrix4fv(this.uInvTransModelMatrix, false, this.itMatrices[i]);
 		gl.drawElements(gl.TRIANGLES, 30, gl.UNSIGNED_BYTE, 0);

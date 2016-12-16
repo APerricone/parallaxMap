@@ -78,13 +78,17 @@ function main()
 	selText.onchange = draw;
 	var selModel= document.getElementById('model');
 	selModel.onchange = draw;
+	var selWire = document.getElementById('wire');
+	selWire.onchange = draw;
+	
 	function draw()
 	{
 		gl.viewport(0,0,c.width,c.height);
 		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 		mesh.draw(camera.viewProj,camera.invViewProj,c.width,c.height,
 			parseInt(selText.value),parseInt(selModel.value));
-		mesh.drawDebug(camera.viewProj);
+		if(selWire.checked)
+			mesh.drawDebug(camera.viewProj);
 	}
 
 	function onResize()

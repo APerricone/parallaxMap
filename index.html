@@ -22,16 +22,19 @@
 				position: absolute;
 				left: 16px;
 				top: 16px;
-				padding: 4px;
+				padding: 24px;
 				z-index: 100;
 				background-color: white;
 				-webkit-clip-path: circle(10px at 14px 14px);
+				-moz-clip-path: circle(10px at 14px 14px);
 				clip-path: circle(10px at 14px 14px);
 				transition: -webkit-clip-path 1s, clip-path 1s;
 			}
 			div:hover
 			{
 				-webkit-clip-path: circle(150px at 14px 14px);
+				-moz-clip-path: circle(150px at 14px 14px);
+				clip-path: circle(150px at 14px 14px);
 			}
 		</style>
 		<script type="text/javascript" src="vector.js"></script>
@@ -47,8 +50,7 @@
 	</head>
 	<body>
 	<div>
-		<br>
-		<label>texture <select id="texture">
+		<label>Texture <select id="texture">
 			<option value="0">Noise</option>
 			<option value="1">Bricks</option>
 		</select></label><br>
@@ -56,7 +58,9 @@
 			<option value="0">Plane</option>
 			<option value="1">Cube</option>
 			<option value="2" disabled>Sphere</option>
-		</select></label>
+		</select></label><br>
+		<label><input id="wire" type="checkbox">Show wireframe</label><br>
 	</div>
 	</body>
 </html>
+

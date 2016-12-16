@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>TestTop</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<style type="text/css">
+			body
+			{
+				margin: 8px;
+				width: 786px;
+				line-height: 10px;
+			}
+			.space
+			{
+				width: 256px;
+				display: inline-block;
+				padding: 0;
+				border: 0;
+				margin: 0;
+			}
+			canvas
+			{
+				padding: 0;
+				border: 0;
+				margin: 0;
+			}
+		</style>
+		<script type="text/javascript" src="textureHelpers.js"></script>
+		<script type="text/javascript">
+			function cloneCanvas(newCanvas, oldCanvas) 
+			{
+				var context = newCanvas.getContext('2d');
+				newCanvas.width = oldCanvas.width;
+				newCanvas.height = oldCanvas.height;
+				context.drawImage(oldCanvas, 0, 0);
+				return newCanvas;
+			}
+			function main()
+			{
+				var nO = 8;
+				var nt = new NoiseTexture(8);
+				var s1 = document.getElementById('dest0');
+				nt.render(s1,nO);
+				cloneCanvas(document.getElementById('dest1'),s1);
+				cloneCanvas(document.getElementById('dest3'),s1);
+				cloneCanvas(document.getElementById('dest4'),s1);
+				nt.render(document.getElementById('dest2'),nO,true);
+			}
+			document.addEventListener("DOMContentLoaded", main);
+		</script>
+	</head>
+	<body>
+		<div class="space"> 
+		</div><canvas style="transform: rotate(180deg);" id="dest0"></canvas>
+		<br>
+		<canvas style="transform: rotate(90deg);" id="dest1">
+		</canvas><canvas style="transform: rotate(0deg);" id="dest2">
+		</canvas><canvas style="transform: rotate(-90deg);" id="dest3"></canvas>
+		<br>
+		<div class="space">
+		</div><canvas style="transform: rotate(0deg);" id="dest4"></canvas>
+	</body>
+</html>
+

@@ -40,7 +40,7 @@ float GetCollision(float v0,float v1,float u0,float u1)
 	return (u0-v0)/(v1-v0-u1+u0);
 }
 #define EPS 1e-10
-#define N_STEP 16.0
+#define N_STEP 32.0
 #define STEP (1.0/N_STEP)
 void main() 
 {

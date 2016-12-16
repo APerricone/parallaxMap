@@ -1,12 +1,6 @@
-function NoiseTexture(n,canvas)
+function NoiseTexture(n)
 {
 	if(n==undefined) n=8;
-	if(canvas==undefined)
-	{
-		canvas = document.createElement("canvas");
-		canvas.width = canvas.height = 256;
-	}
-	var	c2d = canvas.getContext('2d');
 	var rnd = [];
 	var n = 8;
 	for(var y=0;y<n;y++) 
@@ -15,8 +9,6 @@ function NoiseTexture(n,canvas)
 		for(var x=0;x<n;x++) 
 			rnd[y][x] = Math.random();
 	}
-	this.canvas = canvas;
-	this.c2d = c2d;
 	this.rnd = rnd;
 	this.n = n;
 }
@@ -27,34 +19,65 @@ function smoothStep(v1,v2,t)
 	return v1*(1-t)+v2*t;
 }
 
-NoiseTexture.prototype.Perlin = function(x,y)
+NoiseTexture.prototype.Perlin = function(x,y,l,doTop)
 {
 	var n = this.n;
 	var rnd = this.rnd;
-	var tx = x%1;
-	var ty = y%1;
-	x=Math.floor(x)%n;
-	y=Math.floor(y)%n;
-	var x1 = (x+1)%n;
-	var y1 = (y+1)%n;
-	var v1 = smoothStep(rnd[y][x],rnd[y][x1],tx);
-	var v2 = smoothStep(rnd[y1][x],rnd[y1][x1],tx);
+	var x0 = x/l;
+	var y0 = y/l;
+	var tx = x0%1;
+	var ty = y0%1;
+	x0=Math.floor(x0)%n;
+	y0=Math.floor(y0)%n;
+	var x1 = (x0+1)%n;
+	var y1 = (y0+1)%n;
+	var v00 = rnd[y0][x0];
+	var v01 = rnd[y0][x1];
+	var v10 = rnd[y1][x0];
+	var v11 = rnd[y1][x1];
+	if(doTop)
+	{
+		if(x<l)
+		{
+			v00 = rnd[0][y0];
+			v10 = rnd[0][y1];
+		}
+		if(x>256-l)
+		{
+			y0 = (255-y)/l;
+			y0 = Math.floor(y0)%n;
+			y1 = (y0+1)%n;
+			v01 = rnd[0][y1];
+			v11 = rnd[0][y0];
+			
+		}
+		if(y<l)
+		{
+			x0 = (255-x)/l;
+			x0 = Math.floor(x0)%n;
+			x1 = (x0+1)%n;
+			v00 = rnd[0][x1];
+			v01 = rnd[0][x0];
+		}
+	}
+	var v1 = smoothStep(v00,v01,tx);
+	var v2 = smoothStep(v10,v11,tx);
 	return smoothStep(v1,v2,ty);
 }
 
-NoiseTexture.prototype.doTxt = function(nOct,fn)
+NoiseTexture.prototype.doTxt = function(nOct,doTop,fn)
 {
 	var n = this.n;
 	var rnd = this.rnd;
-	for(var y=0;y<this.canvas.height;y++)
-		for(var x=0;x<this.canvas.width;x++)
+	for(var y=0;y<256;y++)
+		for(var x=0;x<256;x++)
 		{
 			var l = 256/n;
 			var v = 0;
 			var h = 0.5;
 			for(var o=0;o<nOct;o++)
 			{
-				v += this.Perlin(x/l,y/l)*h;
+				v += this.Perlin(x,y,l,doTop)*h;
 				l/=2;
 				h/=2;
 			}
@@ -66,7 +89,7 @@ NoiseTexture.prototype.getMinMax = function(nOct)
 {
 	var max = 0;
 	var min = 1;
-	this.doTxt(nOct,function(x,y,v)
+	this.doTxt(nOct,false,function(x,y,v)
 	{
 		if(v>max) max=v;
 		if(v<min) min=v;
@@ -74,27 +97,43 @@ NoiseTexture.prototype.getMinMax = function(nOct)
 	return [min,max];
 }
 
-NoiseTexture.prototype.render = function(nOct,max,min)
+NoiseTexture.prototype.render = function(canvas,nOct,doTop,max,min)
 {
+	if(canvas==undefined)
+	{
+		canvas = document.createElement("canvas");
+	}
+	canvas.width = canvas.height = 256;
+	var	c2d = canvas.getContext('2d');
+	
 	if(max==undefined)
 	{
 		var tmp = this.getMinMax(nOct);
 		min = tmp[0];
 		max = tmp[1];
 	}
-	var c2d = this.c2d;
-	this.doTxt(nOct,function(x,y,v)
+	this.doTxt(nOct,doTop,function(x,y,v)
 	{
 		var c = Math.round(v*255/max);
 		c2d.fillStyle= 'rgb('+c+','+c+','+c+')';
 		c2d.fillRect(x,y,1,1);
 	});
+	/*
+	c2d.fillStyle= '#FFF';
+	c2d.font="20px Georgia";
+	var dim = 256;
+	c2d.fillText("TOP",dim/2,20);
+	c2d.fillText("LEFT",2,100);
+	c2d.fillText("BOTTOM",100,dim-2);
+	c2d.fillText("RIGHT",dim-c2d.measureText("RIGHT").width-2,100);
+//*/
 }
 
 function textureFromCanvas(gl,canvasTmp)
 {
 	var txt = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, txt);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE,  canvasTmp);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
@@ -125,7 +164,7 @@ function normalFromCanvas(gl,canvasTmp,c2d)
 		var nx = getPixel(x+1,y);
 		var py = getPixel(x,y-1);
 		var ny = getPixel(x,y+1);
-		var v = vector.normalize([px-nx,py-ny,10]);
+		var v = vector.normalize([px-nx,ny-py,10]);
 		c2d.fillStyle= 'rgb('+Math.round((v[0]+1)*127.5)+','+Math.round((v[1]+1)*127.5)+','+Math.round((v[2]+1)*127.5)+')';
 		c2d.fillRect(x,y,1,1);
 	}
