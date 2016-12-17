@@ -29,7 +29,7 @@ function Mesh(gl,onDone)
 		0,4, 4,1, 4,5, 5,1, 
 		5,3, 5,7, 7,3,
 		7,2, 7,6, 6,2, 
-		6,0, 6,4]), gl.STATIC_DRAW);
+		6,0, 6,4, 0,7]), gl.STATIC_DRAW);
 	var tc = this;
 	loadProgram(gl,"mesh.vs","mesh.fs",function(p)
 	{
@@ -331,7 +331,7 @@ Mesh.prototype.drawDebug = function(matrix)
 	for(var i=0;i<this.matrices.length;i++)
 	{
 		gl.uniformMatrix4fv(this.debugProgram.uModelMatrix, false, this.matrices[i]);
-		gl.drawElements(gl.LINES, 34, gl.UNSIGNED_BYTE, 0);
+		gl.drawElements(gl.LINES, 36, gl.UNSIGNED_BYTE, 0);
 	}
 
 //	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,this.iBuff);

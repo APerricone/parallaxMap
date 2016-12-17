@@ -92,11 +92,11 @@ void main()
 		float l = clamp(dot(n,vec3(0.4,0.8,0.5)),0.0,1.0);
 		l = l * 0.8 + 0.2;
 		gl_FragColor = vec4(l,l,l,1);
-		//#if GL_EXT_frag_depth
-		//vec4 screenPos = uPVMatrix * vec4(pos1,1);  
-		//screenPos/=screenPos.w;
-		//gl_FragDepthEXT = screenPos.z;
-		////#endif 
+		#if GL_EXT_frag_depth
+		vec4 screenPos = uPVMatrix * vec4(finalPos,1);  
+		screenPos/=screenPos.w;
+		gl_FragDepthEXT = (screenPos.z+1.0)/2.0;
+		#endif 
 		//gl_FragColor = vec4(screenPos.xyz,1);
 	}
 	else
