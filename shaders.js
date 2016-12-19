@@ -1,3 +1,36 @@
+function myGet(url,onLoaded,extraData)
+{
+	var xhr = new XMLHttpRequest();
+	xhr.extraData = extraData;
+	xhr.open('GET', url, true);
+	xhr.onload = function(e) {
+		if(xhr.status==200)
+		{
+			var regex = /#include "([^"]*)"/g;
+			var text = xhr.response;
+			var m = regex.exec(text);
+			var n=0;
+			while(m)
+			{
+				n++;
+				myGet(m[1],function(inc,mData)
+				{
+					text=text.replace(mData[0],inc);
+					n--;
+					if(n==0)
+						onLoaded(text,extraData);
+				},m);
+				m = regex.exec(text);
+			}
+			if(n==0)
+				onLoaded(text,extraData);
+		}			
+		else
+			alert("unable to download "+url)
+	};	 
+	xhr.send();	
+}
+
 function loadProgram(gl,vsUrl,fsUrl,fn)
 {
 	var vs = undefined,fs = undefined;
@@ -7,30 +40,16 @@ function loadProgram(gl,vsUrl,fsUrl,fn)
 			return;
 		fn(compile(gl,vs,fs));
 	}
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', vsUrl, true);
-	xhr.onload = function(e) {
-		if(xhr.status==200)
+	myGet(vsUrl,function(resp)
 		{
-			vs = xhr.response;
+			vs = resp;
 			onLoad()
-		}			
-		else
-			alert("unable to download "+vsUrl)
-	};	 
-	xhr.send();	
-	var xhr2 = new XMLHttpRequest();
-	xhr2.open('GET', fsUrl, true);
-	xhr2.onload = function(e) {
-		if(xhr2.status==200)
+		});	 
+	myGet(fsUrl,function(resp)
 		{
-			fs = xhr2.response;
+			fs = resp;
 			onLoad()
-		}			
-		else
-			alert("unable to download "+fsUrl)
-	};	 
-	xhr2.send();	
+		});	 
 }
 
 function compile(gl,vs,fs)

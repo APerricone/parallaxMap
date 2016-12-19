@@ -1,0 +1,76 @@
+uniform sampler2D sDepthTxt;
+
+uniform mat4 uInvPVMatrix;
+
+/*flat */varying vec4 uPlane0;
+/*flat */varying vec4 vPlane0;
+/*flat */varying vec4 uPlane1;
+/*flat */varying vec4 vPlane1;
+
+/*flat */varying vec4 plane0;
+/*flat */varying vec4 plane1;
+
+uniform vec2 uScreenSize;
+
+vec3 linePlane(vec3 a,vec3 b,vec4 plane)
+{
+	// dot(vec4(P,-1),plane) = 0
+	// P = a + t * (b-a)
+	// found plane . (a+t*(b-a),-1) = 0
+	// plane . (a,-1) + plane . (t*(b-a),0) = 0
+	// plane . (a,-1) + t * plane . ((b-a),0) = 0
+	// t = - plane . (a,-1) / plane . (b-a,0) 
+	vec3 dir = b-a;
+	float t = -dot(plane,vec4(a,-1.0)) / dot(plane,vec4(dir,0.0));
+	return mix(a,b,t);
+}
+
+float GetCollision(float v0,float v1,float u0,float u1)
+{
+	// v0 + (v1-v0)t = u0 + (u1-u0)t
+	// (v1-v0-u1+u0)*t = u0-v0
+	return (u0-v0)/(v1-v0-u1+u0);
+}
+#define EPS 1e-10
+#define N_STEP 32.0
+#define STEP (1.0/N_STEP)
+bool parallax(out vec3 finalPos,out vec2 finalUV,out float finalT) 
+{
+	vec2 screenPos = (gl_FragCoord.xy/uScreenSize)*2.0-vec2(1.0);
+	vec4 posA = uInvPVMatrix * vec4( screenPos,0,1 ); 
+	vec4 posB = uInvPVMatrix * vec4( screenPos,1,1 ); 
+	posA/=posA.w;
+	posB/=posB.w;
+	vec3 pos0 = linePlane(posA.xyz,posB.xyz,plane0);
+	vec3 pos1 = linePlane(posA.xyz,posB.xyz,plane1);
+	vec2 txt0 = vec2(dot(uPlane0,vec4(pos0,1)),dot(vPlane0,vec4(pos0,1)));
+	vec2 txt1 = vec2(dot(uPlane1,vec4(pos1,1)),dot(vPlane1,vec4(pos1,1)));
+	float t,nt;
+	float h0, h1; 
+	vec2 uv0,uv1;
+	t=nt=1.0;
+	uv0=uv1=txt1;
+	h0=h1=texture2D(sDepthTxt,txt1.xy).x; 	
+	for(int i=0;i<int(N_STEP);i++)
+	{
+		t=nt;
+		uv1 = uv0;
+		h1=h0;
+		nt = t- STEP;
+		uv0 = mix(txt0,txt1,nt);
+		h0 = texture2D(sDepthTxt,uv0.xy).x; 
+		float r = GetCollision(h0,h1,nt,t);
+		if( r>=0.0-EPS && r<=1.0+EPS)
+		{
+			finalUV = mix(uv0,uv1,r);
+			if(all(greaterThanEqual(finalUV.xy,vec2(0.0))) && all(lessThanEqual(finalUV.xy,vec2(1.0))))
+			{
+				finalT=nt+r*STEP;
+				finalPos = mix(pos0,pos1,t);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
