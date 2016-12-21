@@ -33,11 +33,17 @@ vector.dot = function(a,b)
 vector.normalize = function(a,r) 
 { 
 	var l = Math.sqrt(vector.dot(a,a)); 
+	return vector.scale(a,1/l,r);
+}
+
+vector.scale = function(a,b,r)
+{
 	if(r==undefined)
 	{
 		r = []; 
 		r.length=a.length;
 	}
-	for(var i=0;i<a.length;i++) r[i] = a[i] / l;
+	for(var i=0;i<r.length;i++) r[i] = a[i] * b;
 	return r;
 }
+

@@ -8,7 +8,6 @@ function main()
 		alert("WebGL not supported");
 				throw "error";
 	}
-	gl.clearColor(0.4, 0.4, 0.7, 1.0);
 	gl.enable(gl.CULL_FACE);
 	gl.cullFace(gl.BACK);
 	gl.getExtension("EXT_frag_depth");
@@ -17,6 +16,9 @@ function main()
 
 	var mesh = new Mesh(gl,draw);
 	var camera = new Camera();
+	var shadow = new Shadow(gl);
+	shadow.setBBox([-1.1,-1.1,-1.1],[1.1,1.1,1.1]);
+	
 	var down = false;
 	var exX,exY;
 	var alpha=0, beta=0, dist = 7;
@@ -80,15 +82,24 @@ function main()
 	selModel.onchange = draw;
 	var selWire = document.getElementById('wire');
 	selWire.onchange = draw;
-	
 	function draw()
 	{
+		shadow.setForRender();
+		mesh.drawShadow(shadow.camera.viewProj, shadow.camera.invViewProj,
+						shadow.dim,shadow.dim)
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		gl.viewport(0,0,c.width,c.height);
+		gl.clearColor(0.4, 0.4, 0.7, 1.0);
 		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-		mesh.draw(camera.viewProj,camera.invViewProj,c.width,c.height,
-			parseInt(selText.value),parseInt(selModel.value));
+		mesh.draw(camera.viewProj,camera.invViewProj,
+			//shadow.camera.viewProj, shadow.camera.invViewProj,
+			c.width,c.height,
+			parseInt(selText.value),parseInt(selModel.value),
+			shadow.shadowMap,shadow.camera.viewProj);
 		if(selWire.checked)
 			mesh.drawDebug(camera.viewProj);
+			//mesh.drawDebug(shadow.camera.viewProj)
 	}
 
 	function onResize()
