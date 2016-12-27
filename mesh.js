@@ -140,6 +140,13 @@ function Mesh(gl,onDone)
 	this.changeTxt = 100;
 }
 
+function PlaneFor3Points(a,b,c)
+{
+	var n = vector.normalize(vector.cross3(vector.sub(b,a),vector.sub(c,b)));
+	n.push(vector.dot(a,n));
+	return n;
+}
+
 Mesh.prototype.setPlane = function()
 {
 	var gl=this.gl;
@@ -164,10 +171,16 @@ Mesh.prototype.setPlane = function()
 	}
 	this.txtIdx = [0];
 
-	var uPlane = new Float32Array([1/2.0,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
-	var vPlane = new Float32Array([0,1/2.0,0,0.5]); // v = dot(vPlane,vec4(P,1)
-	var plane1 = new Float32Array([0,0,1,0]);  		// plane0 = plane containes the triangle and the points with height 1 -> vec4(P,-1) * plane1 = 0
-	var plane0 = new Float32Array([0,0,1,-0.4]);		// plane1 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
+	var uPlane = new Float32Array([1/2.0,0,0,0.5]); // u = dot(uPlane,vec4(P,1))
+	var vPlane = new Float32Array([0,1/2.0,0,0.5]); // v = dot(vPlane,vec4(P,1))
+	var planes = [];
+	planes.push(0,0,-2.5,1); // plane0 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
+	// plane 0 --> z=-0.4 --> -z=0.4 --> -2.5z = 1 (it is becase (0,0,0,-1) dot (0,0,-1,0.4) = -0.4 but we want -1, so divide for 0.4=multiply for 2.5)
+	planes.push(0,0,   1,0); // plane1 = plane containes the triangle and the points with height 1 -> vec4(P,-1) * plane1 = 0
+	planes.push( 1,0,0,1);
+	planes.push(-1,0,0,1);
+	planes.push(0, 1,0,1);
+	planes.push(0,-1,0,1);
 	
 	for(var i=0;i<2;i++)
 	{
@@ -179,8 +192,7 @@ Mesh.prototype.setPlane = function()
 			gl.uniform4fv(gl.getUniformLocation(prg, "u_vPlane1"), vPlane);
 			gl.uniform4fv(gl.getUniformLocation(prg, "u_uPlane0"), uPlane);
 			gl.uniform4fv(gl.getUniformLocation(prg, "u_vPlane0"), vPlane);
-			gl.uniform4fv(gl.getUniformLocation(prg, "u_plane1"), plane1);
-			gl.uniform4fv(gl.getUniformLocation(prg, "u_plane0"), plane0);
+			gl.uniform4fv(gl.getUniformLocation(prg, "u_planes"), new Float32Array(planes));
 		}
 	}
 	this.changeTxt = 100;
@@ -189,17 +201,18 @@ Mesh.prototype.setPlane = function()
 Mesh.prototype.setCube = function()
 {
 	var gl=this.gl;
-
+	var h = 0.2;
+	var inp = 1-h;
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.vBuff);
 	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
 		 1.0, 1.0, 1.0, //0 
 		-1.0, 1.0, 1.0, //1
 		 1.0,-1.0, 1.0, //2
 		-1.0,-1.0, 1.0, //3
-		 0.9, 0.9, 0.9, //4 
-		-0.9, 0.9, 0.9, //5
-		 0.9,-0.9, 0.9, //6
-		-0.9,-0.9, 0.9  //7
+		 inp, inp, inp, //4 
+		-inp, inp, inp, //5
+		 inp,-inp, inp, //6
+		-inp,-inp, inp  //7
 	]), gl.STATIC_DRAW);
 
 	for(var i=0;i<2;i++)
@@ -209,27 +222,32 @@ Mesh.prototype.setCube = function()
 		{
 			var uPlane = new Float32Array([1/2.0,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
 			var vPlane = new Float32Array([0,1/2.0,0,0.5]); // v = dot(vPlane,vec4(P,1)
-			var plane1 = new Float32Array([0,0,1,1]);  		// plane0 = plane containes the triangle and the points with height 1 -> vec4(P,-1) * plane1 = 0
-			var plane0 = new Float32Array([0,0,1,0.9]);		// plane1 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
-				
+			var planes = [];
+			planes.push(0,0,-1/h,-1/h+1); // plane0 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
+			// (0,0,-1,-1+h) * (0,0,1,-1) = -1+1-h = -h
+			// (0,0,-1/h,-1/h+1) * (0,0,1,-1) = -1/h-1/h-1 = -1
+			planes.push(0,0,  1, 1); // plane1 = plane containes the triangle and the points with height 1 -> vec4(P,-1) * plane1 = 0
+			planes.push.apply(planes,PlaneFor3Points([-inp,-inp,inp],[-1,-1,1],[-1, 1,1]));
+			planes.push.apply(planes,PlaneFor3Points([ inp,-inp,inp],[ 1,-1,1],[-1,-1,1]));
+			planes.push.apply(planes,PlaneFor3Points([ inp, inp,inp],[ 1, 1,1],[ 1,-1,1]));
+			planes.push.apply(planes,PlaneFor3Points([-inp, inp,inp],[-1, 1,1],[ 1, 1,1]));
 			gl.useProgram(prg);	
 			gl.uniform4fv(gl.getUniformLocation(prg, "u_uPlane1"), uPlane);
 			gl.uniform4fv(gl.getUniformLocation(prg, "u_vPlane1"), vPlane);
-			var uPlane = new Float32Array([1/1.8,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
-			var vPlane = new Float32Array([0,1/1.8,0,0.5]); // v = dot(vPlane,vec4(P,1)
+			var uPlane = new Float32Array([0.5/inp,0,0,0.5]); // u = dot(uPlane,vec4(P,1)
+			var vPlane = new Float32Array([0,0.5/inp,0,0.5]); // v = dot(vPlane,vec4(P,1)
 			gl.uniform4fv(gl.getUniformLocation(prg, "u_uPlane0"), uPlane);
 			gl.uniform4fv(gl.getUniformLocation(prg, "u_vPlane0"), vPlane);
-			gl.uniform4fv(gl.getUniformLocation(prg, "u_plane1"), plane1);
-			gl.uniform4fv(gl.getUniformLocation(prg, "u_plane0"), plane0);
+			gl.uniform4fv(gl.getUniformLocation(prg, "u_planes"), new Float32Array(planes));
 		}
 	}
 	this.matrices = [];
-	this.matrices.push(new Float32Array(matrix.identity(4)));
+	this.matrices.push(new Float32Array(matrix.identity(4)));//*
 	this.matrices.push(new Float32Array(matrix.rotate_y(Math.PI/2,4)));
 	this.matrices.push(new Float32Array(matrix.rotate_y(-Math.PI/2,4)));
 	this.matrices.push(new Float32Array(matrix.rotate_y(Math.PI,4)));
 	this.matrices.push(new Float32Array(matrix.rotate_x(Math.PI/2,4)));
-	this.matrices.push(new Float32Array(matrix.rotate_x(-Math.PI/2,4)));
+	this.matrices.push(new Float32Array(matrix.rotate_x(-Math.PI/2,4))); //*/
 	this.itMatrices = [];
 	for(var i=0;i<this.matrices.length;i++)
 	{

@@ -24,8 +24,8 @@ void main()
 		shadowPos/=shadowPos.w;
 		shadowPos = (shadowPos + vec4(1.0)) * vec4(0.5) ;
 		float shadow = (texture2D(sShadowTxt,shadowPos.xy).x);
-		if( shadowPos.z > shadow+0.01 ) l=0.0;
-		//l = l * 0.8 + 0.2;
+		if( shadowPos.z > shadow+0.02 ) l*=0.25;
+		l = l * 0.8 + 0.2;
 		gl_FragColor = vec4(l,l,l,1);
 		//gl_FragColor = texture2D(sShadowTxt,uv);
 		#if GL_EXT_frag_depth

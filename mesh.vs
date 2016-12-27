@@ -8,16 +8,18 @@ uniform vec4 u_vPlane0;
 uniform vec4 u_uPlane1;
 uniform vec4 u_vPlane1;
 
-uniform vec4 u_plane0;
-uniform vec4 u_plane1;
+//uniform vec4 u_plane0;
+//uniform vec4 u_plane1;
+uniform vec4 u_planes[6];
 
 varying vec4 uPlane0;
 varying vec4 vPlane0;
 varying vec4 uPlane1;
 varying vec4 vPlane1;
 
-varying vec4 plane0;
-varying vec4 plane1;
+//varying vec4 plane0;
+//varying vec4 plane1;
+varying vec4 planes[6];
 
 
 
@@ -31,6 +33,6 @@ void main()
 	uPlane1 = uInvTransModelMatrix * u_uPlane1;
 	vPlane1 = uInvTransModelMatrix * u_vPlane1;
 	
-	plane0 = uInvTransModelMatrix * u_plane0;
-	plane1 = uInvTransModelMatrix * u_plane1;
+	for(int i=0;i<6;i++)
+		planes[i] = uInvTransModelMatrix * u_planes[i];
 }
