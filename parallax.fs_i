@@ -1,4 +1,4 @@
-#line 1 1
+#line 2 1
 uniform sampler2D sDepthTxt;
 
 uniform mat4 uInvPVMatrix;
@@ -53,7 +53,7 @@ float GetCollision(float v0,float v1,float u0,float u1)
 	// (v1-v0-u1+u0)*t = u0-v0
 	return (u0-v0)/(v1-v0-u1+u0);
 }
-#define EPS 1e-4
+#define EPS 1e-3
 #define N_STEP 16.0
 #define STEP (1.0/N_STEP)
 bool parallax(out vec3 finalPos,out vec2 finalUV,out float finalT) 
@@ -107,13 +107,26 @@ bool parallax(out vec3 finalPos,out vec2 finalUV,out float finalT)
 		if( r>=0.0-EPS && r<=1.0+EPS)
 		{
 			finalUV = mix(uvt,uvn,r);
-			//if(all(greaterThanEqual(finalUV.xy,vec2(0.0))) && all(lessThanEqual(finalUV.xy,vec2(1.0))))
-			{
-				finalT=t+r*STEP;
-				finalPos = mix(pos0,pos1,t);
-				return true;
-			}
+			finalT=mix(htt,htn,r);
+			finalPos = mix(pos0,pos1,t+r*STEP);
+			return true;
 		}
 	}
 	return false;
+}
+
+vec3 CalcNormal(float t,vec2 uv)
+{
+#define DTXT 1e-3
+	vec3 planeU = mix(uPlane0.xyz,uPlane1.xyz,t);
+	vec3 planeV = mix(vPlane0.xyz,vPlane1.xyz,t);
+	vec3 planeZ = planes[0].xyz;
+	planeU /= dot(planeU,planeU);
+	planeV /= dot(planeV,planeV);
+	planeZ /= -dot(planeZ,planeZ);
+	vec3 dirU = (texture2D(sDepthTxt,uv.xy+vec2(DTXT,0)).x-texture2D(sDepthTxt,uv.xy-vec2(DTXT,0)).x)*planeZ.xyz +
+				(2.0*DTXT)*planeU.xyz;
+	vec3 dirV = (texture2D(sDepthTxt,uv.xy+vec2(0,DTXT)).x-texture2D(sDepthTxt,uv.xy-vec2(0,DTXT)).x)*planeZ.xyz +
+				(2.0*DTXT)*planeV.xyz;
+	return normalize(cross(dirU,dirV));
 }

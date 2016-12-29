@@ -103,16 +103,16 @@ function Mesh(gl,onDone)
 	c2d.fillStyle = '#000';
 	c2d.fillRect(0,0,256,256);
 	c2d.fillStyle = '#FFF';
-	for(var r=16;r>0;r--)
+	for(var r=32;r>0;r--)
 	{
-		var c = Math.round(255*Math.sqrt(1-r/16));
+		var c = Math.round(255*Math.sqrt(1-r/32));
 		c2d.fillStyle = 'rgb('+c+','+c+','+c+')';
 		for(var y=32;y<256;y+=64)
 			for(var x=32;x<256;x+=64)
 		{
 			//c2d.fillRect(x-16, y-16, 32, 32);
 			c2d.beginPath();
-			c2d.arc(x,y,r*2,0,Math.PI*2);
+			c2d.arc(x,y,r,0,Math.PI*2);
 			c2d.fill();
 		}
 	}
@@ -150,17 +150,17 @@ function PlaneFor3Points(a,b,c)
 Mesh.prototype.setPlane = function()
 {
 	var gl=this.gl;
-
+	var h = 0.5;
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.vBuff);
 	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
 		 1.0, 1.0, 0, //0 
 		-1.0, 1.0, 0, //1
 		 1.0,-1.0, 0, //2
 		-1.0,-1.0, 0, //3
-		 1.0, 1.0,-0.4, //4 
-		-1.0, 1.0,-0.4, //5
-		 1.0,-1.0,-0.4, //6
-		-1.0,-1.0,-0.4  //7
+		 1.0, 1.0,-h, //4 
+		-1.0, 1.0,-h, //5
+		 1.0,-1.0,-h, //6
+		-1.0,-1.0,-h  //7
 	]), gl.STATIC_DRAW);
 	this.matrices = [];
 	this.matrices[0] = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
@@ -174,7 +174,7 @@ Mesh.prototype.setPlane = function()
 	var uPlane = new Float32Array([1/2.0,0,0,0.5]); // u = dot(uPlane,vec4(P,1))
 	var vPlane = new Float32Array([0,1/2.0,0,0.5]); // v = dot(vPlane,vec4(P,1))
 	var planes = [];
-	planes.push(0,0,-2.5,1); // plane0 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
+	planes.push(0,0,-1/h,1); // plane0 = plane containes the points with height 0 -> vec4(P,-1) * plane0 = 0
 	// plane 0 --> z=-0.4 --> -z=0.4 --> -2.5z = 1 (it is becase (0,0,0,-1) dot (0,0,-1,0.4) = -0.4 but we want -1, so divide for 0.4=multiply for 2.5)
 	planes.push(0,0,   1,0); // plane1 = plane containes the triangle and the points with height 1 -> vec4(P,-1) * plane1 = 0
 	planes.push( 1,0,0,1);
